@@ -6,7 +6,7 @@ Weapon for defending Human consciousness
 # Technical documentation
 In order to get you started you would need to know:
 ###
-- Blank source file is Source/index.html
+- Blank source file is Hendekaupaja-source-blank.html
 - Comments and details of each function are written in HTML comments.
 - To change list of websites edit JS variable mediaList.
 ```
