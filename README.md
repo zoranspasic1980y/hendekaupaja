@@ -1,4 +1,4 @@
-# hendekaupaja
+# Hendekaupaja
 Weapon for defending Human consciousness
 
 ###
